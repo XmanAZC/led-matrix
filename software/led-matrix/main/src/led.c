@@ -21,7 +21,7 @@ uint8_t get_led_state(void) { return led_state; }
 
 void led_on(void) {
     /* Set the LED pixel using RGB from 0 (0%) to 255 (100%) for each color */
-    led_strip_set_pixel(led_strip, 0, 16, 16, 16);
+    led_strip_set_pixel(led_strip, 0, 255, 255, 16);
 
     /* Refresh the strip to send data */
     led_strip_refresh(led_strip);
@@ -42,7 +42,7 @@ void led_init(void) {
     ESP_LOGI(TAG, "example configured to blink addressable led!");
     /* LED strip initialization with the GPIO and pixels number*/
     led_strip_config_t strip_config = {
-        .strip_gpio_num = CONFIG_BLINK_GPIO,
+        .strip_gpio_num = 21,
         .max_leds = 1, // at least one LED on board
     };
 #if CONFIG_BLINK_LED_STRIP_BACKEND_RMT
