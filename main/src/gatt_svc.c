@@ -198,7 +198,7 @@ void send_heart_rate_indication(void)
  *      - Characteristic register event
  *      - Descriptor register event
  */
-void gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg)
+void gatt_svr_register_callback(struct ble_gatt_register_ctxt *ctxt, void *arg)
 {
     /* Local variables */
     char buf[BLE_UUID_STR_LEN];

@@ -41,7 +41,7 @@ static void nimble_host_config_init(void)
     /* Set host callbacks */
     ble_hs_cfg.reset_cb = on_stack_reset;
     ble_hs_cfg.sync_cb = on_stack_sync;
-    ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
+    ble_hs_cfg.gatts_register_cb = gatt_svr_register_callback;
     ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
 
     /* Store host configuration */
@@ -85,6 +85,9 @@ void app_main(void)
         ESP_LOGE(TAG, "failed to initialize nvs flash, error code: %d ", ret);
         return;
     }
+
+    void wifi_provisioning(void);
+    wifi_provisioning();
 
     /* NimBLE stack initialization */
     ret = nimble_port_init();
