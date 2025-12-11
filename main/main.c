@@ -7,7 +7,6 @@
 #include "common.h"
 #include "gap.h"
 #include "gatt_svc.h"
-#include "heart_rate.h"
 #include "led.h"
 
 /* Library function declarations */
@@ -25,17 +24,20 @@ static void nimble_host_task(void *param);
  *      - on_stack_reset is called when host resets BLE stack due to errors
  *      - on_stack_sync is called when host has synced with controller
  */
-static void on_stack_reset(int reason) {
+static void on_stack_reset(int reason)
+{
     /* On reset, print reset reason to console */
     ESP_LOGI(TAG, "nimble stack reset, reset reason: %d", reason);
 }
 
-static void on_stack_sync(void) {
+static void on_stack_sync(void)
+{
     /* On stack sync, do advertising initialization */
     adv_init();
 }
 
-static void nimble_host_config_init(void) {
+static void nimble_host_config_init(void)
+{
     /* Set host callbacks */
     ble_hs_cfg.reset_cb = on_stack_reset;
     ble_hs_cfg.sync_cb = on_stack_sync;
@@ -46,7 +48,8 @@ static void nimble_host_config_init(void) {
     ble_store_config_init();
 }
 
-static void nimble_host_task(void *param) {
+static void nimble_host_task(void *param)
+{
     /* Task entry log */
     ESP_LOGI(TAG, "nimble host task has been started!");
 
@@ -57,28 +60,8 @@ static void nimble_host_task(void *param) {
     vTaskDelete(NULL);
 }
 
-static void heart_rate_task(void *param) {
-    /* Task entry log */
-    ESP_LOGI(TAG, "heart rate task has been started!");
-
-    /* Loop forever */
-    while (1) {
-        /* Update heart rate value every 1 second */
-        update_heart_rate();
-        ESP_LOGI(TAG, "heart rate updated to %d", get_heart_rate());
-
-        /* Send heart rate indication if enabled */
-        send_heart_rate_indication();
-
-        /* Sleep */
-        vTaskDelay(HEART_RATE_TASK_PERIOD);
-    }
-
-    /* Clean up at exit */
-    vTaskDelete(NULL);
-}
-
-void app_main(void) {
+void app_main(void)
+{
     /* Local variables */
     int rc;
     esp_err_t ret;
@@ -92,18 +75,21 @@ void app_main(void) {
      */
     ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
-        ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
         ESP_ERROR_CHECK(nvs_flash_erase());
         ret = nvs_flash_init();
     }
-    if (ret != ESP_OK) {
+    if (ret != ESP_OK)
+    {
         ESP_LOGE(TAG, "failed to initialize nvs flash, error code: %d ", ret);
         return;
     }
 
     /* NimBLE stack initialization */
     ret = nimble_port_init();
-    if (ret != ESP_OK) {
+    if (ret != ESP_OK)
+    {
         ESP_LOGE(TAG, "failed to initialize nimble stack, error code: %d ",
                  ret);
         return;
@@ -111,14 +97,16 @@ void app_main(void) {
 
     /* GAP service initialization */
     rc = gap_init();
-    if (rc != 0) {
+    if (rc != 0)
+    {
         ESP_LOGE(TAG, "failed to initialize GAP service, error code: %d", rc);
         return;
     }
 
     /* GATT server initialization */
     rc = gatt_svc_init();
-    if (rc != 0) {
+    if (rc != 0)
+    {
         ESP_LOGE(TAG, "failed to initialize GATT server, error code: %d", rc);
         return;
     }
@@ -127,7 +115,7 @@ void app_main(void) {
     nimble_host_config_init();
 
     /* Start NimBLE host task thread and return */
-    xTaskCreate(nimble_host_task, "NimBLE Host", 4*1024, NULL, 5, NULL);
-    xTaskCreate(heart_rate_task, "Heart Rate", 4*1024, NULL, 5, NULL);
+    xTaskCreate(nimble_host_task, "NimBLE Host", 4 * 1024, NULL, 5, NULL);
+
     return;
 }

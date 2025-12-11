@@ -6,7 +6,6 @@
 /* Includes */
 #include "gatt_svc.h"
 #include "common.h"
-#include "heart_rate.h"
 #include "led.h"
 
 /* Private function declarations */
@@ -70,29 +69,35 @@ static const struct ble_gatt_svc_def gatt_svr_svcs[] = {
 
 /* Private functions */
 static int heart_rate_chr_access(uint16_t conn_handle, uint16_t attr_handle,
-                                 struct ble_gatt_access_ctxt *ctxt, void *arg) {
+                                 struct ble_gatt_access_ctxt *ctxt, void *arg)
+{
     /* Local variables */
     int rc;
 
     /* Handle access events */
     /* Note: Heart rate characteristic is read only */
-    switch (ctxt->op) {
+    switch (ctxt->op)
+    {
 
     /* Read characteristic event */
     case BLE_GATT_ACCESS_OP_READ_CHR:
         /* Verify connection handle */
-        if (conn_handle != BLE_HS_CONN_HANDLE_NONE) {
+        if (conn_handle != BLE_HS_CONN_HANDLE_NONE)
+        {
             ESP_LOGI(TAG, "characteristic read; conn_handle=%d attr_handle=%d",
                      conn_handle, attr_handle);
-        } else {
+        }
+        else
+        {
             ESP_LOGI(TAG, "characteristic read by nimble stack; attr_handle=%d",
                      attr_handle);
         }
 
         /* Verify attribute handle */
-        if (attr_handle == heart_rate_chr_val_handle) {
+        if (attr_handle == heart_rate_chr_val_handle)
+        {
             /* Update access buffer value */
-            heart_rate_chr_val[1] = get_heart_rate();
+            heart_rate_chr_val[1] = 60; /* Example heart rate value */
             rc = os_mbuf_append(ctxt->om, &heart_rate_chr_val,
                                 sizeof(heart_rate_chr_val));
             return rc == 0 ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
@@ -113,39 +118,51 @@ error:
 }
 
 static int led_chr_access(uint16_t conn_handle, uint16_t attr_handle,
-                          struct ble_gatt_access_ctxt *ctxt, void *arg) {
+                          struct ble_gatt_access_ctxt *ctxt, void *arg)
+{
     /* Local variables */
     int rc;
 
     /* Handle access events */
     /* Note: LED characteristic is write only */
-    switch (ctxt->op) {
+    switch (ctxt->op)
+    {
 
     /* Write characteristic event */
     case BLE_GATT_ACCESS_OP_WRITE_CHR:
         /* Verify connection handle */
-        if (conn_handle != BLE_HS_CONN_HANDLE_NONE) {
+        if (conn_handle != BLE_HS_CONN_HANDLE_NONE)
+        {
             ESP_LOGI(TAG, "characteristic write; conn_handle=%d attr_handle=%d",
                      conn_handle, attr_handle);
-        } else {
+        }
+        else
+        {
             ESP_LOGI(TAG,
                      "characteristic write by nimble stack; attr_handle=%d",
                      attr_handle);
         }
 
         /* Verify attribute handle */
-        if (attr_handle == led_chr_val_handle) {
+        if (attr_handle == led_chr_val_handle)
+        {
             /* Verify access buffer length */
-            if (ctxt->om->om_len == 1) {
+            if (ctxt->om->om_len == 1)
+            {
                 /* Turn the LED on or off according to the operation bit */
-                if (ctxt->om->om_data[0]) {
+                if (ctxt->om->om_data[0])
+                {
                     led_on();
                     ESP_LOGI(TAG, "led turned on!");
-                } else {
+                }
+                else
+                {
                     led_off();
                     ESP_LOGI(TAG, "led turned off!");
                 }
-            } else {
+            }
+            else
+            {
                 goto error;
             }
             return rc;
@@ -165,8 +182,10 @@ error:
 }
 
 /* Public functions */
-void send_heart_rate_indication(void) {
-    if (heart_rate_ind_status && heart_rate_chr_conn_handle_inited) {
+void send_heart_rate_indication(void)
+{
+    if (heart_rate_ind_status && heart_rate_chr_conn_handle_inited)
+    {
         ble_gatts_indicate(heart_rate_chr_conn_handle,
                            heart_rate_chr_val_handle);
         ESP_LOGI(TAG, "heart rate indication sent!");
@@ -179,12 +198,14 @@ void send_heart_rate_indication(void) {
  *      - Characteristic register event
  *      - Descriptor register event
  */
-void gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg) {
+void gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg)
+{
     /* Local variables */
     char buf[BLE_UUID_STR_LEN];
 
     /* Handle GATT attributes register events */
-    switch (ctxt->op) {
+    switch (ctxt->op)
+    {
 
     /* Service register event */
     case BLE_GATT_REGISTER_OP_SVC:
@@ -221,18 +242,23 @@ void gatt_svr_register_cb(struct ble_gatt_register_ctxt *ctxt, void *arg) {
  *      1. Update heart rate subscription status
  */
 
-void gatt_svr_subscribe_cb(struct ble_gap_event *event) {
+void gatt_svr_subscribe_cb(struct ble_gap_event *event)
+{
     /* Check connection handle */
-    if (event->subscribe.conn_handle != BLE_HS_CONN_HANDLE_NONE) {
+    if (event->subscribe.conn_handle != BLE_HS_CONN_HANDLE_NONE)
+    {
         ESP_LOGI(TAG, "subscribe event; conn_handle=%d attr_handle=%d",
                  event->subscribe.conn_handle, event->subscribe.attr_handle);
-    } else {
+    }
+    else
+    {
         ESP_LOGI(TAG, "subscribe by nimble stack; attr_handle=%d",
                  event->subscribe.attr_handle);
     }
 
     /* Check attribute handle */
-    if (event->subscribe.attr_handle == heart_rate_chr_val_handle) {
+    if (event->subscribe.attr_handle == heart_rate_chr_val_handle)
+    {
         /* Update heart rate subscription status */
         heart_rate_chr_conn_handle = event->subscribe.conn_handle;
         heart_rate_chr_conn_handle_inited = true;
@@ -246,7 +272,8 @@ void gatt_svr_subscribe_cb(struct ble_gap_event *event) {
  *      2. Update NimBLE host GATT services counter
  *      3. Add GATT services to server
  */
-int gatt_svc_init(void) {
+int gatt_svc_init(void)
+{
     /* Local variables */
     int rc;
 
@@ -255,13 +282,15 @@ int gatt_svc_init(void) {
 
     /* 2. Update GATT services counter */
     rc = ble_gatts_count_cfg(gatt_svr_svcs);
-    if (rc != 0) {
+    if (rc != 0)
+    {
         return rc;
     }
 
     /* 3. Add GATT services */
     rc = ble_gatts_add_svcs(gatt_svr_svcs);
-    if (rc != 0) {
+    if (rc != 0)
+    {
         return rc;
     }
 
