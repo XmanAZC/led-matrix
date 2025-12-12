@@ -1,5 +1,5 @@
 file(GLOB_RECURSE srcs "main.c" "src/*.c")
 
 idf_component_register(SRCS "${srcs}"
-                       PRIV_REQUIRES bt nvs_flash esp_driver_gpio esp_driver_i2c esp_wifi my_wifi_provisioning
+                       PRIV_REQUIRES bt nvs_flash esp_driver_gpio esp_driver_i2c esp_wifi wifi_provisioning
                        INCLUDE_DIRS "./include")

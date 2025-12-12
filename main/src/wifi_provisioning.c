@@ -21,7 +21,6 @@
 
 #include <wifi_provisioning/manager.h>
 
-#undef CONFIG_EXAMPLE_PROV_ENABLE_APP_CALLBACK
 #undef CONFIG_EXAMPLE_RESET_PROVISIONED
 #define CONFIG_EXAMPLE_RESET_PROV_MGR_ON_FAILURE 1
 #define CONFIG_EXAMPLE_PROV_MGR_CONNECTION_CNT (5)
@@ -84,7 +83,7 @@ static esp_err_t example_get_sec2_verifier(const char **verifier, uint16_t *veri
 }
 
 /* Signal Wi-Fi events on this event-group */
-const int WIFI_CONNECTED_EVENT = BIT0;
+const int WIFI_PROV_END_EVENT = BIT0;
 static EventGroupHandle_t wifi_event_group;
 
 #define PROV_QR_VERSION "v1"
@@ -133,6 +132,7 @@ static void event_handler(void *arg, esp_event_base_t event_base,
         case WIFI_PROV_END:
             /* De-initialize manager once provisioning is finished */
             wifi_prov_mgr_deinit();
+            xEventGroupSetBits(wifi_event_group, WIFI_PROV_END_EVENT);
             break;
         default:
             break;
@@ -157,8 +157,6 @@ static void event_handler(void *arg, esp_event_base_t event_base,
     {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
         ESP_LOGI(TAG, "Connected with IP Address:" IPSTR, IP2STR(&event->ip_info.ip));
-        /* Signal main application to continue execution */
-        xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_EVENT);
     }
     else if (event_base == PROTOCOMM_TRANSPORT_BLE_EVENT)
     {
@@ -290,10 +288,6 @@ void wifi_provisioning(void)
         /* What is the Provisioning Scheme that we want ?
          * wifi_prov_scheme_softap or wifi_prov_scheme_ble */
         .scheme = wifi_prov_scheme_ble,
-#ifdef CONFIG_EXAMPLE_PROV_ENABLE_APP_CALLBACK
-        .app_event_handler = wifi_prov_event_handler,
-#endif /* EXAMPLE_PROV_ENABLE_APP_CALLBACK */
-
         /* Any default scheme specific event handler that you would
          * like to choose. Since our example application requires
          * neither BT nor BLE, we can choose to release the associated
@@ -415,7 +409,7 @@ void wifi_provisioning(void)
         /* Print QR code for provisioning */
         wifi_prov_print_qr(service_name, username, pop, PROV_TRANSPORT_BLE);
 
-        xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_EVENT, true, true, portMAX_DELAY);
+        xEventGroupWaitBits(wifi_event_group, WIFI_PROV_END_EVENT, true, true, portMAX_DELAY);
     }
     else
     {
