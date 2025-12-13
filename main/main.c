@@ -120,5 +120,8 @@ void app_main(void)
     /* Start NimBLE host task thread and return */
     xTaskCreate(nimble_host_task, "NimBLE Host", 4 * 1024, NULL, 5, NULL);
 
+    void sntp_example(void);
+    sntp_example();
+
     return;
 }
